@@ -89,8 +89,8 @@ in {
 
         # Workspace binds
         # Cycle through workspaces
-        "bind = SUPER, bracketleft, workspace, r-1"
-        "bind = SUPER, bracketright, workspace, r+1"
+        "bind = SUPER_CTRL, left,  workspace, -1"
+        "bind = SUPER_CTRL, right, workspace, +1"
 
         # Hold SUPER and right-click drag to resize
         "bindm = SUPER, mouse:272, movewindow"   # left click drag moves
