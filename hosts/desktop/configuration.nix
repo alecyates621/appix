@@ -1,0 +1,187 @@
+{ config, pkgs, lib, ... }:
+
+{
+  environment.etc."xdg/hypr/hyprland.conf".enable = false;
+
+  nixpkgs.config.allowUnfree = true;
+
+  ########################################
+  # Import your machine-specific hardware
+  ########################################
+  imports = [
+    ./hardware-configuration.nix
+  ];
+
+  #########################
+  # Boot loader (UEFI)
+  #########################
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  #########################
+  # Basic system identity
+  #########################
+  networking.hostName = "nixos";               # change if you want
+  time.timeZone       = "America/Chicago";     # your TZ
+
+  #########################
+  # Users
+  #########################
+  users.users.appa = {
+    isNormalUser = true;
+    description  = "Appa";
+    # set a password with: sudo passwd appa
+    extraGroups  = [ "wheel" "video" "audio" "input" "networkmanager" ];
+  };
+
+  # Optional: passwordless sudo for wheel (handy while setting up)
+  security.sudo.wheelNeedsPassword = true;
+
+  #############################################
+  # Networking (Wi-Fi via NetworkManager)
+  #############################################
+  networking.networkmanager.enable = true;
+
+  #############################################
+  # Graphics / OpenGL
+  #############################################
+  hardware.graphics.enable = true;
+  # NOTE: driSupport / driSupport32Bit were removed in 25.05.
+
+  # If you're on NVIDIA, uncomment and tune this block:
+  # nixpkgs.config.allowUnfree = true;  # required for nvidia drivers/firmware
+  # services.xserver.videoDrivers = [ "nvidia" ];
+  # hardware.nvidia = {
+  #   modesetting.enable = true;
+  #   open = false;                # true for newer cards with the open kernel module
+  #   powerManagement.enable = false;
+  #   nvidiaSettings = false;
+  # };
+
+  #############################################
+  # Audio (PipeWire)
+  #############################################
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    pulse.enable = true;  # PulseAudio compatibility
+    jack.enable  = true;
+  };
+
+  #############################################
+  # Hyprland + login (greetd → Hyprland)
+  #############################################
+  programs.hyprland.enable = true;
+
+  services.greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.dbus}/bin/dbus-run-session Hyprland";
+        user = "appa";  # <-- ensure this matches your user
+      };
+    };
+  };
+
+  #############################################
+  # XDG Portals (screenshare, file pickers, etc.)
+  #############################################
+  xdg.portal = {
+    enable = true;
+    extraPortals = [
+      pkgs.xdg-desktop-portal-hyprland
+      pkgs.xdg-desktop-portal-gtk
+    ];
+  };
+
+  #############################################
+  # Wayland-friendly environment flags
+  #############################################
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";     # Electron/Chromium → Wayland
+    MOZ_ENABLE_WAYLAND = "1"; # Firefox → Wayland
+    QT_QPA_PLATFORM = "wayland";
+  };
+
+  #############################################
+  # System packages (no Home-Manager needed)
+  #############################################
+  environment.systemPackages = with pkgs; [
+    # Core UX
+    alacritty
+    waybar
+    wofi
+    swaybg
+    cava
+    swaynotificationcenter
+    python3
+
+    # QoL utilities
+    wl-clipboard
+    grim
+    slurp
+    mako
+    pavucontrol
+    brightnessctl
+    networkmanagerapplet
+    imv
+    file-roller
+    p7zip
+    unzip
+    unrar
+    gvfs
+    gh
+
+    # Gaming
+    steam-run
+    
+  ];
+
+  #############################################
+  # Enable gaming packages
+  #############################################
+  programs.steam.enable = true;
+
+  #############################################
+  # Thunarr file manager
+  #############################################
+  programs.thunar = {
+    enable = true;
+    plugins = with pkgs.xfce; [ thunar-archive-plugin thunar-volman ];
+  };
+
+  services.tumbler.enable = true;
+
+  #############################################
+  # Polkit (admin prompts in Wayland)
+  #############################################
+  security.polkit.enable = true;
+
+  #############################################
+  # Optional odds & ends
+  #############################################
+  services.gvfs.enable = true;              # file chooser, MTP, network mounts helpers
+  hardware.bluetooth.enable = false;        # set true if you need BT
+  services.printing.enable = false;         # set true for CUPS/printing
+
+  ############################################
+  # SSH Enabled
+  ############################################
+  services.openssh.enable = true;
+
+  #############################################
+  # Firewall
+  #############################################
+  networking.firewall.enable = true;
+
+  #############################################
+  # Nix settings (flakes optional)
+  #############################################
+  # nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
+  #############################################
+  # Version pin — match your install version
+  #############################################
+  system.stateVersion = "25.05"; # DO NOT change after initial install
+}
+
